@@ -55,9 +55,10 @@ array `[n n -n -n]` and adds it componentwise to the region.
 
 Then you put your data on the stack and call one of the layout
 functions with its arguments.  As described the data can be whatever
-length, but it must match the depth expected by the layout
-function.  All of these expect to layout cells within rows, so the data
-must have two sets of brackets.
+length, but it must match the depth expected by the layout function.
+(Update: it doesn't need to match the depth anymore. It will do
+something different but won't complain.) All of these expect to layout
+cells within rows, so the data must have two sets of brackets.
 
     [ [ (cell1) (cell2) (cell3) ]
       <</default(green) 2(blue)>> ]
