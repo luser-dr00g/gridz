@@ -73,28 +73,14 @@
 %/margin{ dup dup neg dup 4 array astore }
 
 % divide evenly to match rows
-%/vert { % bounds table eachrow
-  %3 1 roll dup length exch 4 1 roll % t e b n 
-  %exch aload pop {Y X y x n} args-begin
-  %/ddy Y y sub n div def
-  %[ [ y ddy Y .0001 add {} for ]
-    %dup 0 get exch
-    %1 1 index length 1 sub getinterval
-    %{ % yi yi+1
-	%[ x 4 2 roll % [ x yi yi+1
-	%X exch dup % [ x yi X yi+1 yi+1
-        %6 1 roll ] exch % [ x yi X yi+1 ] yi+1
-    %} forall pop
-  %] reverse
-  %end % t e regions
-  %3 1 roll % regions table eachrow
-  %to-each map
-%}
 /vert { % bounds table eachrow
   1 index length 3 1 roll divy
-  %1 index length % b t e tn
-  %3 index dy exch div % b t e h
-  %3 1 roll fixht
+}
+
+% divide evenly into n slices
+/divy { % bounds n table eachrow
+  4 2 roll 1 index dy exch div % t e b dy/n
+  4 2 roll fixht
 }
 
 % divide off fixed-height slices, discarding the scrap slice
@@ -109,44 +95,14 @@
   end 3 1 roll to-each map
 }
 
-% divide evenly into n slices
-%/divy { %bounds n table eachrow
-  %4 2 roll exch aload pop % table eachrow n bounds...
-  %{Y X y x n} args-begin
-  %/ddy Y y sub n div def
-  %[ [ y ddy Y .0001 add {} for ]
-    %{
-	%[ x 4 2 roll X exch dup 6 1 roll ] exch
-    %} fold pop
-  %] reverse
-  %end 3 1 roll to-each map
-%}
-/divy { % bounds n table eachrow
-  4 2 roll 1 index dy exch div % t e b dy/n
-  4 2 roll fixht
-}
-
 % divide evenly by number cells
-%/horz { % bounds row eachcell
-  %1 index length 3 1 roll % b n r e
-  %to-each 3 1 roll % re b n
-  %exch aload pop {Y X y x n} args-begin
-  %/ddx X x sub n div def
-  %[ [ x ddx X .0001 add {} for ]
-    %dup 0 get exch
-    %1 1 index length 1 sub getinterval
-    %{ % xi xi+1
-      %[ 3 1 roll % [ xi xi+1
-      %y exch % [ xi y xi+1
-      %Y 1 index % [ xi y xi+1 Y xi+1
-      %6 1 roll ] exch % [ xi y xi+1 Y ] xi+1
-    %} forall pop
-  %]
-  %end
-  %exch map
-%}
 /horz { % bounds row eachcell
   1 index length 3 1 roll divx
+}
+
+% divide evenly into n cells
+/divx { % bounds n row eachcell
+    4 2 roll 1 index dx exch div 4 2 roll fixwd
 }
 
 % divide off fixed-width cells, discarding the scrap slice
@@ -157,22 +113,6 @@
       { [ 3 1 roll y exch Y 1 index 6 1 roll ] exch } fold pop
     ]
   end 3 1 roll to-each map
-}
-
-% divide evenly into n cells
-%/divx { % bounds n table eachcell
-  %4 2 roll exch aload pop
-  %{Y X y x n} args-begin
-  %/ddx X x sub n div def
-  %[ [ x ddx X .0001 add {} for ]
-    %{
-      %[ 3 1 roll y exch Y 1 index 6 1 roll ] exch
-    %} fold pop
-  %]
-  %end 3 1 roll to-each map
-%}
-/divx { % bounds n row eachcell
-    4 2 roll 1 index dx exch div 4 2 roll fixwd
 }
 
 % stub for typesetting in a region
