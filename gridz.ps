@@ -79,6 +79,7 @@
 /rmargin{ [0 0 -1 0] exch {mul} curry map }
 /margin+{ margin + }
 
+
 % divide evenly to match rows
 /vert { % bounds table eachrow
   1 index length 3 1 roll divy
@@ -122,21 +123,16 @@
   end 3 1 roll to-each map
 }
 
-% stub for typesetting in a region
-/placetext {
-  1 index xy 3 index dx 4 index dy rectstroke
-  exch dup dx .05 mul 0 1 index neg 0 4 array astore + exch
-  1 index xy 3 index dy .18 mul add moveto
-  /Helvetica 18 selectfont
-  show pop
-}
+/rect {dup xy 2 index dx 3 index dy rectstroke pop}
 
 % stretch/shrink to fit text (nicely?) in the region.
 % intended for short strings like tags or labels.
 % text shown in color with a hack-y outline effect
 /zoomshow { % bounds str
   2 copy == == / =
-  1 index xy 3 index dx 4 index dy rectstroke
+  %1 index xy 3 index dx 4 index dy rectstroke
+  %exch dup xy 2 index dx 3 index dy rectstroke exch
+  %exch dup rect exch
   exch dup dx .05 mul hmargin +
        5 margin+ exch
   /Helvetica-Bold 2 index dy .9 mul selectfont
@@ -160,52 +156,56 @@
   grestore
 }
 
-%Formatters
-
-/gridshow {
-    {
-	{ zoomshow } horz
-    } vert
+% stub for typesetting in a region
+/placetext {
+  1 index xy 3 index dx 4 index dy rectstroke
+  exch dup dx .05 mul 0 1 index neg 0 4 array astore + exch
+  1 index xy 3 index dy .18 mul add moveto
+  /Helvetica 18 selectfont
+  show pop
 }
 
-/labels {
+%Formatters  region data (opt-args) formatter
+
+/gridshow { % region data
+    { { zoomshow } horz } vert
+}
+
+/labels { % region data
     72 exch {
-      2.625 72 mul exch { zoomshow } fixwd
+      2.625 72 mul exch { exch dup rect exch zoomshow } fixwd
     } fixht
 }
 
-/tags {
+/tags { % region data
     1.314 72 mul exch {
-	{ zoomshow } horz
+	{ exch dup rect exch zoomshow } horz
     } fixht
 }
 
-/fourby {
-    4 exch {
-	{ zoomshow } horz
-    } divy
+/fourby { % region data
+    4 exch { { exch dup rect exch zoomshow } horz } divy
 }
 
-/byfour {
-    {
-	4 exch { zoomshow } divx
-    } vert
+/byfour { % region data
+    { 4 exch { exch dup rect exch zoomshow } divx } vert
 }
 
-/fourbysix {
-    4 exch {
-	6 exch { zoomshow } divx
-    } divy
+/fourbysix { % region data
+    4 exch { 6 exch { exch dup rect exch zoomshow } divx } divy
 }
 
-% we pass data into the eachcell proc from the eachrow proc by currying
-/nbym {
-    { exch { zoomshow } divx } curry
+/nbym { % region data n m   % we pass data into the eachcell proc from the eachrow proc by currying
+    { exch { exch dup rect exch zoomshow } divx } curry
     exch 3 1 roll divy
 }
 
-/layout {
-    { exch { placetext } divx } curry
+/addresses {
+    10 exch { 3 exch { exch dup rect exch 4 exch { zoomshow } divy } divx } divy
+}
+
+/layout { % region data n m 
+    { exch { exch dup rect exch placetext } divx } curry
     exch 3 1 roll divy
 }
 >> begin
@@ -215,9 +215,8 @@
 [ 6 3 2 3 ] 3 setdash
 /length { dup (hot potato) eq { pop 4 }{ length } ifelse } bind def
 
-[0 0 612 792]
 %[0 0 792 612] 0 792 translate -90 rotate
-%18 margin+
+[0 0 612 792]
 36 vmargin +   % 1/2 inch top and bottom for Avery labels
 13.5 hmargin + % 3/16 inch left and right for Avery labels
 
@@ -237,12 +236,14 @@
   >>
 ]
 pop
+
 [
  [(duck)(duck)(goose)]
  [(rock)(paper)(scissors)]
- (hot potato)  % one-value reused for the whole row
+ (hot potato)  % one-value reused for the whole row ^^override length to set number
 ]
 %pop
+
 pstack/ =
 %gridshow  % divide evenly to match data
 %labels    % divide-off fixed-height, fixed-width cells (Avery 5160 labels 2.625x1 inch)
@@ -250,8 +251,9 @@ pstack/ =
 %fourby    % four rows of whatever divided evenly
 %byfour    % evenly divide by data rows, 4 cells per row
 %fourbysix % four rows of six cells
-10 3 nbym % n rows of m cells (Avery 5160 labels 10 x 3 per sheet)
+%10 3 nbym % n rows of m cells (Avery 5160 labels 10 x 3 per sheet)
 %3 3 nbym
+addresses
 %4 8 layout
 
 pstack/ =
