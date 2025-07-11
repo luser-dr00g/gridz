@@ -50,13 +50,12 @@
   1 index type /arraytype eq { to-each-array }{
       1 index type /dicttype eq { to-each-sparse }{ to-each-unit } ifelse
   } ifelse
-}
-/to-each-array {
-    1 index length {n proc arr} args-begin
-    ({//arr 0 get //proc exec SELF 1 2 copy get 1 add //n mod put})
-    cvx exec selfie end
-  } ifelse
 } cached2
+/to-each-array {
+  1 index length {n proc arr} args-begin
+  ({//arr 0 get //proc exec SELF 1 2 copy get 1 add //n mod put})
+  cvx exec selfie end
+}
 /to-each-sparse {
   {proc dict} args-begin
   ({//dict 0 2 copy known not {pop/default} if get //proc exec SELF 1 2 copy get 1 add put})
@@ -72,7 +71,13 @@
 /dx {aload pop pop exch pop exch sub} % X-x
 /xy {aload pop pop pop}
 /margin{ [1 1 -1 -1] exch {mul} curry map }
-%/margin{ dup dup neg dup 4 array astore }
+/vmargin{ [0 1 0 -1] exch {mul} curry map }
+/hmargin{ [1 0 -1 0] exch {mul} curry map }
+/tmargin{ [0 0 0 -1] exch {mul} curry map }
+/bmargin{ [0 1 0 0] exch {mul} curry map }
+/lmargin{ [1 0 0 0] exch {mul} curry map }
+/rmargin{ [0 0 -1 0] exch {mul} curry map }
+/margin+{ margin + }
 
 % divide evenly to match rows
 /vert { % bounds table eachrow
@@ -132,7 +137,7 @@
 /zoomshow { % bounds str
   2 copy == == / =
   1 index xy 3 index dx 4 index dy rectstroke
-  exch dup dx .05 mul 0 1 index neg 0 4 array astore + exch
+  exch dup dx .05 mul hmargin + exch %0 1 index neg 0 4 array astore + exch
   /Helvetica-Bold 2 index dy .9 mul selectfont
   1 index xy 3 index dy .18 mul add moveto
   dup stringwidth pop % b s sw_x
@@ -152,20 +157,6 @@
     0 setlinecap
     false charpath strokepath stroke
   grestore
-}
-
-%failed attempt to "bake in" the vertical centering into the font
-%in order to streamline the code in zoomshow
-/selectshiftedfont {
-  {sz fn}args-begin
-    /fn fn findfont def
-    /h fn /FontBBox get 1 get abs def
-    fn [ 1 0 0 1 0 h
-	%1000 div
-	fn /FontMatrix get dtransform
-       ] dup ==
-       makefont sz scalefont setfont
-  end
 }
 
 %Formatters
@@ -209,7 +200,6 @@
 }
 
 % we pass data into the eachcell proc from the eachrow proc by currying
-% the data and the proc into a new proc and using that one.
 /nbym {
     { exch { exch 5 margin + exch zoomshow } divx } curry
     exch 3 1 roll divy
@@ -228,7 +218,7 @@
 
 %[0 0 612 792]
 [0 0 792 612] 0 792 translate -90 rotate
-18 margin +
+18 margin+
 
  % data is accessed cyclically to match regions shape.
  % to-each constructor is memo-ized so subsequent instantiations
