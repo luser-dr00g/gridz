@@ -47,9 +47,11 @@
 
 <<
 /to-each { % array proc . iterator( x=>x a[i] proc )
-  1 index type /arraytype ne {
+  1 index type /arraytype eq { to-each-array }{
       1 index type /dicttype eq { to-each-sparse }{ to-each-unit } ifelse
-  }{
+  } ifelse
+}
+/to-each-array {
     1 index length {n proc arr} args-begin
     ({//arr 0 get //proc exec SELF 1 2 copy get 1 add //n mod put})
     cvx exec selfie end
