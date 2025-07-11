@@ -137,7 +137,8 @@
 /zoomshow { % bounds str
   2 copy == == / =
   1 index xy 3 index dx 4 index dy rectstroke
-  exch dup dx .05 mul hmargin + exch %0 1 index neg 0 4 array astore + exch
+  exch dup dx .05 mul hmargin +
+       5 margin+ exch
   /Helvetica-Bold 2 index dy .9 mul selectfont
   1 index xy 3 index dy .18 mul add moveto
   dup stringwidth pop % b s sw_x
@@ -163,50 +164,48 @@
 
 /gridshow {
     {
-	exch 5 margin + exch
-	{ exch 5 margin + exch zoomshow } horz
+	{ zoomshow } horz
     } vert
 }
 
 /labels {
-    1.254 72 mul exch
-    {
-	2 72 mul exch { exch 5 margin + exch zoomshow } fixwd
+    72 exch {
+      2.625 72 mul exch { zoomshow } fixwd
     } fixht
 }
 
 /tags {
     1.314 72 mul exch {
-	{ exch 5 margin + exch zoomshow } horz
+	{ zoomshow } horz
     } fixht
 }
 
 /fourby {
     4 exch {
-	{ exch 5 margin + exch zoomshow } horz
+	{ zoomshow } horz
     } divy
 }
 
 /byfour {
     {
-	4 exch { exch 5 margin + exch zoomshow } divx
+	4 exch { zoomshow } divx
     } vert
 }
 
 /fourbysix {
     4 exch {
-	6 exch { exch 5 margin + exch zoomshow } divx
+	6 exch { zoomshow } divx
     } divy
 }
 
 % we pass data into the eachcell proc from the eachrow proc by currying
 /nbym {
-    { exch { exch 5 margin + exch zoomshow } divx } curry
+    { exch { zoomshow } divx } curry
     exch 3 1 roll divy
 }
 
 /layout {
-    { exch { exch 5 margin + exch placetext } divx } curry
+    { exch { placetext } divx } curry
     exch 3 1 roll divy
 }
 >> begin
@@ -216,9 +215,11 @@
 [ 6 3 2 3 ] 3 setdash
 /length { dup (hot potato) eq { pop 4 }{ length } ifelse } bind def
 
-%[0 0 612 792]
-[0 0 792 612] 0 792 translate -90 rotate
-18 margin+
+[0 0 612 792]
+%[0 0 792 612] 0 792 translate -90 rotate
+%18 margin+
+36 vmargin +   % 1/2 inch top and bottom for Avery labels
+13.5 hmargin + % 3/16 inch left and right for Avery labels
 
  % data is accessed cyclically to match regions shape.
  % to-each constructor is memo-ized so subsequent instantiations
@@ -244,12 +245,12 @@ pop
 %pop
 pstack/ =
 %gridshow  % divide evenly to match data
-%labels    % divide-off fixed-height, fixed-width cells
+%labels    % divide-off fixed-height, fixed-width cells (Avery 5160 labels 2.625x1 inch)
 %tags      % fixed height, rows to match data
 %fourby    % four rows of whatever divided evenly
 %byfour    % evenly divide by data rows, 4 cells per row
 %fourbysix % four rows of six cells
-8 4 nbym % n rows of m cells
+10 3 nbym % n rows of m cells (Avery 5160 labels 10 x 3 per sheet)
 %3 3 nbym
 %4 8 layout
 
