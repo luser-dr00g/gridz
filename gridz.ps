@@ -46,7 +46,7 @@
 >> begin
 
 <<
-/to-each { % array proc . iterator( x=>x a[i] proc )
+/to-each { % array|dict|string proc . iterator( x=>x a[i] proc )
   1 index type /arraytype eq { to-each-array }{
       1 index type /dicttype eq { to-each-sparse }{ to-each-unit } ifelse
   } ifelse
@@ -80,6 +80,11 @@
 /margin+{ margin + }
 
 
+% draw box around the region
+/rect { % bounds
+  dup xy 2 index dx 3 index dy rectstroke pop
+}
+
 % divide evenly to match rows
 /vert { % bounds table eachrow
   1 index length 3 1 roll divy
@@ -91,15 +96,17 @@
   4 2 roll fixht
 }
 
-% divide off fixed-height slices, discarding the scrap slice
+% divide off fixed-height slices, discarding any scrap slice
 /fixht { % bounds ht table eachrow
   4 2 roll 3 index length 3 2 roll aload pop % table eachrow ht n bounds...
   {Y X y x n h} args-begin
-  [ [ y h Y .0001 add {} for ]
+  [ [ Y h neg y .0001 sub {} for ]
+    %[ y h Y .0001 add {} for ]
     {
-	[ x 4 2 roll X exch dup 6 1 roll ] exch
+	%[ x 4 2 roll      X exch dup     6 1 roll ] exch
+	[ x 4 2 roll exch X exch 2 index 6 1 roll ] exch
     } fold pop
-  ] reverse
+  ] %reverse
   end 3 1 roll to-each map
 }
 
@@ -113,7 +120,7 @@
     4 2 roll 1 index dx exch div 4 2 roll fixwd
 }
 
-% divide off fixed-width cells, discarding the scrap slice
+% divide off fixed-width cells, discarding any scrap slice
 /fixwd { % bounds wd row eachcell
   4 2 roll 3 index length 3 2 roll aload pop
   {Y X y x n w} args-begin
@@ -123,16 +130,11 @@
   end 3 1 roll to-each map
 }
 
-/rect {dup xy 2 index dx 3 index dy rectstroke pop}
-
 % stretch/shrink to fit text (nicely?) in the region.
 % intended for short strings like tags or labels.
 % text shown in color with a hack-y outline effect
 /zoomshow { % bounds str
   2 copy == == / =
-  %1 index xy 3 index dx 4 index dy rectstroke
-  %exch dup xy 2 index dx 3 index dy rectstroke exch
-  %exch dup rect exch
   exch dup dx .05 mul hmargin +
        5 margin+ exch
   /Helvetica-Bold 2 index dy .9 mul selectfont
@@ -158,10 +160,10 @@
 
 % stub for typesetting in a region
 /placetext {
-  1 index xy 3 index dx 4 index dy rectstroke
+  %1 index xy 3 index dx 4 index dy rectstroke
   exch dup dx .05 mul 0 1 index neg 0 4 array astore + exch
   1 index xy 3 index dy .18 mul add moveto
-  /Helvetica 18 selectfont
+  /Palatino-Roman 14 selectfont
   show pop
 }
 
@@ -201,7 +203,21 @@
 }
 
 /addresses {
-    10 exch { 3 exch { exch dup rect exch 4 exch { zoomshow } divy } divx } divy
+    10 exch { 3 exch { exch 4.5 hmargin + dup rect
+		       4.5 vmargin + exch 4 exch
+		       { placetext } divy } divx } divy
+}
+
+/shelves {
+    5 exch {
+	exch 5 vmargin + dup rect exch
+	2 exch {
+	    2 exch {
+		exch dup rect exch
+		zoomshow
+	    } divy
+        } divx
+    } divy
 }
 
 /layout { % region data n m 
@@ -215,34 +231,42 @@
 [ 6 3 2 3 ] 3 setdash
 /length { dup (hot potato) eq { pop 4 }{ length } ifelse } bind def
 
-%[0 0 792 612] 0 792 translate -90 rotate
-[0 0 612 792]
+[0 0 792 612] 0 792 translate -90 rotate
+%[0 0 612 792]
 36 vmargin +   % 1/2 inch top and bottom for Avery labels
-13.5 hmargin + % 3/16 inch left and right for Avery labels
+9 hmargin + % 3/16 inch left and right for Avery labels -1/16 internal hmargin
 
  % data is accessed cyclically to match regions shape.
  % to-each constructor is memo-ized so subsequent instantiations
  % will continue in sequence where the previous one left off
-[
-  [
-    (Cured Meats) (Overstock) (Dairy)        (Pork)        (Poultry)
-    (Beef)        (Produce)   (Pizza Crusts) (Burger Buns) (Hot Dog Buns)
-  ]
-  <<
-    0(pull from right) 10 1 index
-    1(use shelves first)     %only pairs with the first occurence of Overstock
-    11 1 index               %unless we do this too
-    /default(pull from left)
-  >>
-]
+[[[
+    %(Overstock)(Use Shelves First)
+    (Cured Meats)(Pull From Right) 
+    %(Burger Buns)(Pull From Right) 
+    %(Hot Dog Buns)(Pull From Right)
+    (Dairy)(Pull From Left)        
+    %(Pork)(Pull From Left)        
+    %(Poultry)(Pull From Left)
+    %(Beef)(Pull From Left)        
+    (Pretzels)(Pull From Left)
+    (Pizza Crusts)(Pull From Left) 
+    (Produce)(Pull From Left)   
+]]]
 pop
 
+
 [
- [(duck)(duck)(goose)]
+ <</default(duck)2(goose)[7 11]{1 index}forall>>
  [(rock)(paper)(scissors)]
  (hot potato)  % one-value reused for the whole row ^^override length to set number
 ]
 %pop
+
+[[[
+(Name)(123 Streetname)(Apt 42)(City, ST 54321)
+(Other name)(456 Other Street)(Basement)(City, ST 54321)
+]]]
+pop
 
 pstack/ =
 %gridshow  % divide evenly to match data
@@ -253,7 +277,8 @@ pstack/ =
 %fourbysix % four rows of six cells
 10 3 nbym % n rows of m cells (Avery 5160 labels 10 x 3 per sheet)
 %3 3 nbym
-%addresses
+%addresses  % 10x3 x 4 lines for Avery 5160 address labels
+%shelves
 %4 8 layout
 
 pstack/ =
